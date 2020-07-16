@@ -1,7 +1,13 @@
 sudo: required
 services:
   - docker
+env:
+  global:
+    - SHA=$(git rev-parse HEAD)
+    # so that gc doesnt display any prompts "are you sure", dont want to see that
+    - CLOUDSDK_CORE_DISABLE_PROMPTS=1
 before_install:
+  # this unencrypts the service-account file
   - openssl aes-256-cbc -K $encrypted_9f3b5599b056_key -iv $encrypted_9f3b5599b056_iv -in service-account.json.enc -out service-account.json -d
   # you need to google how to install the google cloud sdk
   # the other side of the pipe installs it on travis
@@ -11,3 +17,20 @@ before_install:
   - gcloud components update kubectl
   # service-account.json has our credentials
   - gcloud auth activate-service-account --key-file service-account.json
+  - gcloud config set project multi-k8s-283423
+  - gcloud set compute/zone us-central1-c
+  - gcloud container clusters get-credentials multi-k8s
+  # since we specified Docker as a service, we can run the docker login command
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  # build contest at end **
+  - docker build -t swa181/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true swa181/react-test npm run test
+
+deploy:
+  # telling travis that we have a script for deployment
+  provider: script
+  script: bash ./deploy.sh
+  on:
+    branch: master
