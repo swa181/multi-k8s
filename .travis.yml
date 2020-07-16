@@ -18,7 +18,7 @@ before_install:
   # service-account.json has our credentials
   - gcloud auth activate-service-account --key-file service-account.json
   - gcloud config set project multi-k8s-283423
-  - gcloud set compute/zone us-central1-c
+  - gcloud config set compute/zone us-central1-c
   - gcloud container clusters get-credentials multi-k8s
   # since we specified Docker as a service, we can run the docker login command
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
